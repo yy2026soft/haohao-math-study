@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>易明浩数学学习乐园</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- PWA Theme Color -->
+    <meta name="theme-color" content="#667eea">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- 预加载XLSX库用于导出功能 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <!-- 主页面 -->
+    <div id="mainPage" class="page active">
+        <div class="header">
+            <h1 class="title">🌟 易明浩数学学习乐园 🌟</h1>
+            <div class="subtitle">浩浩小朋友，快来学习数学吧！</div>
+        </div>
+        
+        <div class="main-menu">
+            <button class="menu-btn addition-btn" onclick="startAddition()">
+                <div class="btn-icon">➕</div>
+                <div class="btn-text">加法探险</div>
+                <div class="btn-character">🐉</div>
+            </button>
+            
+            <button class="menu-btn subtraction-btn" onclick="startSubtraction()">
+                <div class="btn-icon">➖</div>
+                <div class="btn-text">减法迷宫</div>
+                <div class="btn-character">🦅</div>
+            </button>
+            
+            <button class="menu-btn multiplication-btn" onclick="startMultiplication()">
+                <div class="btn-icon">✖️</div>
+                <div class="btn-text">乘法城堡</div>
+                <div class="btn-character">🦁</div>
+            </button>
+            
+            <button class="menu-btn division-btn" onclick="startDivision()">
+                <div class="btn-icon">➗</div>
+                <div class="btn-text">除法海洋</div>
+                <div class="btn-character">🐢</div>
+            </button>
+            
+            <button class="menu-btn multiplication-table-btn" onclick="showMultiplicationTable()">
+                <div class="btn-icon">📊</div>
+                <div class="btn-text">九九乘法表</div>
+                <div class="btn-character">🦊</div>
+            </button>
+            
+            <button class="menu-btn history-btn" onclick="showHistory()">
+                <div class="btn-icon">📚</div>
+                <div class="btn-text">学习记录</div>
+                <div class="btn-character">🏆</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- 答题页面 -->
+    <div id="questionPage" class="page">
+        <div class="question-header">
+            <button class="back-btn" onclick="backToMain()">🏠 返回主页</button>
+            <div class="difficulty-selector">
+                <label>难度：</label>
+                <select id="difficulty" onchange="changeDifficulty()">
+                    <option value="5">5以内</option>
+                    <option value="10" selected>10以内</option>
+                    <option value="50">50以内</option>
+                    <option value="100">100以内</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="question-container">
+            <div class="ultra-character" id="ultraCharacter">🐲</div>
+            <div class="question-text" id="questionText">3 + 5 =</div>
+            
+            <div class="answer-section">
+                <div class="input-group">
+                    <input type="number" id="answerInput" placeholder="输入答案" />
+                    <button class="voice-btn" id="voiceBtn" onclick="startVoiceInput()">🎤</button>
+                </div>
+                <button class="submit-btn" onclick="submitAnswer()">提交答案</button>
+                <button class="reset-voice-btn" id="resetVoiceBtn" onclick="resetVoicePermission()" style="display:none;">重新开启语音</button>
+            </div>
+            
+            <div class="feedback" id="feedback"></div>
+        </div>
+    </div>
+
+    <!-- 99乘法表页面 -->
+    <div id="multiplicationTablePage" class="page">
+        <div class="question-header">
+            <button class="back-btn" onclick="backToMain()">🏠 返回主页</button>
+            <div class="table-title">🎵 九九乘法表 🎵</div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-controls">
+                <button class="play-song-btn" onclick="playMultiplicationSong()">
+                    <span class="play-icon">▶️</span>
+                    <span class="play-text">播放乘法表儿歌</span>
+                </button>
+                <button class="stop-song-btn" id="stopSongBtn" onclick="stopMultiplicationSong()" style="display: none;">
+                    <span class="play-icon">⏹️</span>
+                    <span class="play-text">停止播放</span>
+                </button>
+            </div>
+            
+            <div class="multiplication-table" id="multiplicationTable">
+                <!-- 乘法表将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 学习历史页面 -->
+    <div id="historyPage" class="page">
+        <div class="question-header">
+            <button class="back-btn" onclick="backToMain()">🏠 返回主页</button>
+            <div class="table-title">📚 浩浩的学习记录 📚</div>
+        </div>
+        
+        <div class="history-container">
+            <!-- 统计概览 -->
+            <div class="stats-overview">
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="totalSessions">0</div>
+                        <div class="stat-label">总学习次数</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="totalCorrect">0</div>
+                        <div class="stat-label">总答对题数</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="totalStamps">0</div>
+                        <div class="stat-label">获得印章总数</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="todayCorrect">0</div>
+                        <div class="stat-label">今日答对题数</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 日期筛选 -->
+            <div class="date-filter">
+                <button class="filter-btn" onclick="filterHistory('all')">全部</button>
+                <button class="filter-btn" onclick="filterHistory('today')">今天</button>
+                <button class="filter-btn" onclick="filterHistory('week')">本周</button>
+                <button class="filter-btn" onclick="filterHistory('month')">本月</button>
+                <button class="export-btn" onclick="exportHistoryReport()">📊 导出报表</button>
+            </div>
+            
+            <!-- 历史记录列表 -->
+            <div class="history-list" id="historyList">
+                <!-- 历史记录将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 反馈弹窗 -->
+    <div class="modal" id="feedbackModal">
+        <div class="modal-content">
+            <div class="modal-character" id="modalCharacter">🐲</div>
+            <div class="modal-message" id="modalMessage"></div>
+            <button class="modal-btn" onclick="closeModal()">继续学习</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

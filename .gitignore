@@ -1,0 +1,11 @@
+# 排除不必要的文件
+.codebuddy/
+.vscode/
+*.log
+*.tmp
+.DS_Store
+
+# 排除服务器文件
+serve.py
+server.js
+simple_server.py
