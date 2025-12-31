@@ -79,7 +79,7 @@ body {
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
     padding: 20px 15px;
-    max-width: 600px;
+    max-width: 800px;
     margin: 0 auto;
 }
 
@@ -133,9 +133,8 @@ body {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
-.combined-btn {
-    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-    grid-column: span 2;
+.history-btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
 .btn-icon {
@@ -290,12 +289,6 @@ body {
     gap: 12px;
 }
 
-.input-group {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
 #answerInput {
     font-size: 1.6em;
     padding: 12px 20px;
@@ -312,33 +305,6 @@ body {
     border-color: #ee5a24;
     box-shadow: 0 0 15px rgba(255,107,107,0.5);
     transform: scale(1.03);
-}
-
-.voice-btn {
-    background: linear-gradient(45deg, #48dbfb, #0abde3);
-    border: none;
-    color: white;
-    padding: 12px;
-    border-radius: 50%;
-    font-size: 1.3em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(72,219,251,0.4);
-}
-
-.voice-btn:hover {
-    transform: scale(1.08);
-    box-shadow: 0 6px 18px rgba(72,219,251,0.6);
-}
-
-.voice-btn.recording {
-    animation: record-pulse 1s infinite;
-    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-}
-
-@keyframes record-pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.1); opacity: 0.8; }
 }
 
 .submit-btn {
@@ -363,24 +329,7 @@ body {
     transform: translateY(-1px) scale(1.02);
 }
 
-.reset-voice-btn {
-    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 10px;
-}
-
-.reset-voice-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 5px 20px rgba(255,107,107,0.4);
-}
-
-/* 反馈弹窗 */
+/* 反弹窗 */
 .modal {
     display: none;
     position: fixed;
@@ -575,11 +524,6 @@ body {
         width: 150px;
     }
     
-    .voice-btn {
-        padding: 25px;
-        font-size: 1.8em;
-    }
-    
     .statistics {
         flex-direction: column;
         gap: 10px;
@@ -591,39 +535,6 @@ body {
         padding: 8px 15px;
         font-size: 1em;
     }
-}
-
-/* 调试面板 */
-.debug-panel {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 8px;
-    border-radius: 5px;
-    font-size: 11px;
-    z-index: 9999;
-    max-width: 180px;
-    display: none;
-}
-
-.debug-panel.show {
-    display: block;
-}
-
-.debug-btn {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: #ff6b6b;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 12px;
-    z-index: 9998;
 }
 
 /* 动画效果 */
@@ -1060,60 +971,6 @@ body {
     font-size: 1.2em;
 }
 
-/* 合并页面样式 */
-.combined-container {
-    display: flex;
-    gap: 20px;
-    padding: 15px;
-    max-width: 1400px;
-    margin: 0 auto;
-    flex-wrap: wrap;
-}
-
-.combined-left {
-    flex: 1;
-    min-width: 400px;
-    display: flex;
-    flex-direction: column;
-}
-
-.combined-right {
-    flex: 1;
-    min-width: 400px;
-    display: flex;
-    flex-direction: column;
-}
-
-.combined-left .stats-overview,
-.combined-right .stats-overview {
-    margin-bottom: 15px;
-}
-
-.combined-left .history-list {
-    flex: 1;
-    max-height: 500px;
-}
-
-.combined-right .table-controls {
-    margin-bottom: 10px;
-}
-
-@media (max-width: 900px) {
-    .combined-container {
-        flex-direction: column;
-    }
-    
-    .combined-left,
-    .combined-right {
-        min-width: 100%;
-    }
-}
-
-.table-cell.highlight {
-    animation: pulse 1s ease infinite;
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-}
-
 /* 响应式调整 */
 @media (max-width: 768px) {
     .multiplication-table {
@@ -1220,12 +1077,6 @@ body {
         width: 120px;
     }
     
-    .voice-btn {
-        padding: 20px;
-        font-size: 1.5em;
-        margin-left: 10px;
-    }
-    
     .submit-btn {
         font-size: 1.2em;
         padding: 15px 30px;
@@ -1262,12 +1113,6 @@ body {
         font-size: 1em;
         padding: 12px 25px;
     }
-    
-    .reset-voice-btn {
-        font-size: 0.9em;
-        padding: 8px 15px;
-        margin-top: 8px;
-    }
 }
 
 @media (max-width: 480px) {
@@ -1291,7 +1136,8 @@ body {
         grid-template-columns: 1fr;
     }
     
-    .multiplication-table-btn {
+    .multiplication-table-btn,
+    .history-btn {
         grid-column: span 1;
     }
     

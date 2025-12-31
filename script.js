@@ -1,9 +1,7 @@
-// 奥特曼数学学习乐园脚本
+// 易明浩数学学习乐园脚本
 let currentOperation = '';
 let currentDifficulty = 10;
 let currentAnswer = 0;
-let speechRecognition = null;
-let isVoiceEnabled = false; // 语音权限状态
 let multiplicationSongTimer = null; // 乘法表儿歌定时器
 let currentQuestionNumber = 1; // 当前题号
 let totalQuestions = 50; // 总题数
@@ -16,323 +14,6 @@ let nextRewardCount = 10; // 下一个奖励需要的答对题数
 // 答题记录相关
 let quizHistory = []; // 答题历史记录
 let currentSession = null; // 当前答题会话
-
-// 检查并初始化语音识别权限
-function checkVoicePermission() {
-    // 检查本地存储中是否已有语音权限
-    const savedVoicePermission = localStorage.getItem('ultraMathVoicePermission');
-    if (savedVoicePermission === 'granted') {
-        initSpeechRecognition();
-        isVoiceEnabled = true;
-    }
-}
-
-// 请求语音权限
-function requestVoicePermission() {
-    // 检查是否为移动端
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    
-    if (isMobile && !isSecure) {
-        // 移动端HTTPS提示
-        showMobileVoiceWarning();
-        return;
-    }
-    
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        // 显示权限请求弹窗
-        showVoicePermissionModal();
-    } else {
-        showFeedback('您的浏览器不支持语音输入功能', false);
-    }
-}
-
-// 显示语音权限请求弹窗
-function showVoicePermissionModal() {
-    // 如果还没有弹窗，则添加一个
-    if (!document.getElementById('voicePermissionModal')) {
-        const modalHtml = `
-            <div class="modal" id="voicePermissionModal">
-                <div class="modal-content">
-                    <div class="modal-character">🎤</div>
-                    <div class="modal-message">浩浩小朋友，要开启语音功能吗？<br>这样就可以说话回答问题了！</div>
-                    <div style="display: flex; gap: 15px; justify-content: center;">
-                        <button class="modal-btn" id="allowVoiceBtn">允许</button>
-                        <button class="modal-btn" id="denyVoiceBtn" style="background: linear-gradient(45deg, #95a5a6, #7f8c8d);">不允许</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
-        // 绑定事件监听器
-        setTimeout(() => {
-            document.getElementById('allowVoiceBtn').addEventListener('click', allowVoicePermission);
-            document.getElementById('denyVoiceBtn').addEventListener('click', denyVoicePermission);
-        }, 100);
-    }
-    
-    // 显示弹窗
-    setTimeout(() => {
-        document.getElementById('voicePermissionModal').classList.add('active');
-    }, 200);
-}
-
-// 允许语音权限
-function allowVoicePermission() {
-    localStorage.setItem('ultraMathVoicePermission', 'granted');
-    initSpeechRecognition();
-    isVoiceEnabled = true;
-    closeModal('voicePermissionModal');
-    hideResetVoiceButton();
-    showFeedback('语音功能已开启！🎤', true);
-}
-
-// 拒绝语音权限
-function denyVoicePermission() {
-    localStorage.setItem('ultraMathVoicePermission', 'denied');
-    isVoiceEnabled = false;
-    closeModal('voicePermissionModal');
-    // 显示重新开启按钮
-    showResetVoiceButton();
-}
-
-// 重置语音权限
-function resetVoicePermission() {
-    localStorage.removeItem('ultraMathVoicePermission');
-    isVoiceEnabled = false;
-    hideResetVoiceButton();
-    // 重新请求权限
-    requestVoicePermission();
-}
-
-// 显示重新开启语音按钮
-function showResetVoiceButton() {
-    const resetBtn = document.getElementById('resetVoiceBtn');
-    if (resetBtn) {
-        resetBtn.style.display = 'block';
-    }
-}
-
-// 隐藏重新开启语音按钮
-function hideResetVoiceButton() {
-    const resetBtn = document.getElementById('resetVoiceBtn');
-    if (resetBtn) {
-        resetBtn.style.display = 'none';
-    }
-}
-
-// 显示移动端语音警告
-function showMobileVoiceWarning() {
-    const modalHtml = `
-        <div class="modal active" id="mobileVoiceWarning">
-            <div class="modal-content">
-                <div class="modal-character">📱</div>
-                <div class="modal-message">
-                    手机使用语音功能需要注意：<br><br>
-                    1️⃣ 需要在WiFi或4G网络环境下使用<br>
-                    2️⃣ 需要允许浏览器使用麦克风权限<br>
-                    3️⃣ 说话时请靠近手机，声音要清晰<br>
-                    4️⃣ 建议在安静环境下使用<br><br>
-                    是否继续开启语音功能？
-                </div>
-                <div style="display: flex; gap: 15px; justify-content: center;">
-                    <button class="modal-btn" onclick="continueVoicePermission()">继续开启</button>
-                    <button class="modal-btn" onclick="closeMobileVoiceWarning()" style="background: linear-gradient(45deg, #95a5a6, #7f8c8d);">取消</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
-
-// 继续语音权限
-function continueVoicePermission() {
-    closeModal('mobileVoiceWarning');
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        showVoicePermissionModal();
-    } else {
-        showFeedback('您的浏览器不支持语音输入功能', false);
-    }
-}
-
-// 关闭移动端语音警告
-function closeMobileVoiceWarning() {
-    closeModal('mobileVoiceWarning');
-}
-
-// 关闭弹窗（支持指定弹窗ID）
-function closeModal(modalId) {
-    if (modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) modal.classList.remove('active');
-    } else {
-        const modal = document.getElementById('feedbackModal');
-        if (modal) modal.classList.remove('active');
-    }
-}
-
-// 初始化语音识别
-function initSpeechRecognition() {
-    // 检查浏览器是否支持语音识别
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-        console.log('浏览器不支持语音识别');
-        addDebugInfo('❌ 浏览器不支持语音识别');
-        isVoiceEnabled = false;
-        return false;
-    }
-    
-    try {
-        addDebugInfo('🔄 开始初始化语音识别...');
-        speechRecognition = new SpeechRecognition();
-        speechRecognition.lang = 'zh-CN';
-        speechRecognition.continuous = false;
-        speechRecognition.interimResults = false; // 改为false，只使用最终结果
-        speechRecognition.maxAlternatives = 3; // 增加备选结果数量
-        
-        speechRecognition.onstart = function() {
-            console.log('语音识别已启动');
-            addDebugInfo('✅ 语音识别已启动');
-        };
-        
-        speechRecognition.onspeechstart = function() {
-            console.log('检测到语音输入');
-            addDebugInfo('🎤 检测到语音输入');
-        };
-        
-        speechRecognition.onspeechend = function() {
-            console.log('语音输入结束');
-            addDebugInfo('🔇 语音输入结束');
-        };
-        
-        speechRecognition.onresult = function(event) {
-            console.log('语音识别事件触发:', event);
-            addDebugInfo('📊 识别事件触发');
-            
-            if (event.results && event.results.length > 0) {
-                const result = event.results[0];
-                if (result && result.length > 0) {
-                    const transcript = result[0].transcript;
-                    const confidence = result[0].confidence || 0;
-                    const isFinal = result.isFinal;
-                    
-                    console.log('语音识别结果:', transcript, '置信度:', confidence, '是否最终:', isFinal);
-                    addDebugInfo(`📝 识别结果: "${transcript}" (${Math.round(confidence * 100)}%) ${isFinal ? '(最终)' : '(中间)'}`);
-                    
-                    if (isFinal) {
-                        // 尝试从语音中提取数字
-                        const number = extractNumberFromSpeech(transcript);
-                        if (number !== null) {
-                            console.log('提取到的数字:', number);
-                            addDebugInfo(`✅ 提取数字: ${number}`);
-                            document.getElementById('answerInput').value = number;
-                            stopVoiceRecording();
-                            showFeedback(`识别到: "${transcript}" → ${number}`, true);
-                            // 自动提交答案
-                            setTimeout(() => {
-                                submitAnswer();
-                            }, 1000);
-                        } else {
-                            addDebugInfo('❌ 未找到数字');
-                            showFeedback(`"${transcript}" - 未找到数字，请再说一遍`, false);
-                            stopVoiceRecording();
-                        }
-                    }
-                }
-            }
-        };
-        
-        speechRecognition.onerror = function(event) {
-            console.error('语音识别错误:', event.error);
-            addDebugInfo('❌ 识别错误: ' + event.error);
-            stopVoiceRecording();
-            
-            let errorMsg = '语音识别失败，请手动输入';
-            switch(event.error) {
-                case 'not-allowed':
-                    errorMsg = '语音权限被拒绝，请在浏览器地址栏允许麦克风权限';
-                    addDebugInfo('❌ 权限被拒绝');
-                    break;
-                case 'no-speech':
-                    errorMsg = '没有检测到语音，请大声一点';
-                    addDebugInfo('❌ 没有检测到语音');
-                    break;
-                case 'audio-capture':
-                    errorMsg = '麦克风被占用或没有麦克风，请检查设备';
-                    addDebugInfo('❌ 麦克风被占用');
-                    break;
-                case 'network':
-                    errorMsg = '网络连接错误，请检查网络';
-                    addDebugInfo('❌ 网络错误');
-                    break;
-                case 'service-not-allowed':
-                    errorMsg = '语音服务不可用，请使用Chrome浏览器';
-                    addDebugInfo('❌ 语音服务不可用');
-                    break;
-            }
-            showFeedback(errorMsg, false);
-        };
-        
-        speechRecognition.onend = function() {
-            console.log('语音识别自然结束');
-            addDebugInfo('🏁 语音识别结束');
-            stopVoiceRecording();
-        };
-        
-        isVoiceEnabled = true;
-        addDebugInfo('✅ 语音识别初始化成功');
-        return true;
-    } catch (error) {
-        console.error('语音识别初始化失败:', error);
-        addDebugInfo('❌ 初始化失败: ' + error.message);
-        isVoiceEnabled = false;
-        return false;
-    }
-}
-
-// 从语音中提取数字
-function extractNumberFromSpeech(text) {
-    console.log('提取数字，原文:', text);
-    
-    const chineseNumbers = {
-        '零': 0, '一': 1, '二': 2, '三': 3, '四': 4, 
-        '五': 5, '六': 6, '七': 7, '八': 8, '九': 9,
-        '十': 10, '二十': 20, '三十': 30, '四十': 40, '五十': 50,
-        '六十': 60, '七十': 70, '八十': 80, '九十': 90, '一百': 100
-    };
-    
-    // 清理文本，移除标点符号
-    const cleanText = text.replace(/[，。！？、]/g, '');
-    
-    // 优先匹配阿拉伯数字
-    const arabicMatches = cleanText.match(/\d+/);
-    if (arabicMatches) {
-        const number = parseInt(arabicMatches[0]);
-        console.log('匹配到阿拉伯数字:', number);
-        return number;
-    }
-    
-    // 匹配中文数字
-    for (let chinese in chineseNumbers) {
-        if (cleanText.includes(chinese)) {
-            console.log('匹配到中文数字:', chinese, '=', chineseNumbers[chinese]);
-            return chineseNumbers[chinese];
-        }
-    }
-    
-    // 特殊处理：如果是单个数字的声音，比如"答案是一"
-    const singleDigitMatches = cleanText.match(/答案是([一二三四五六七八九十零])/);
-    if (singleDigitMatches && chineseNumbers[singleDigitMatches[1]]) {
-        console.log('匹配到答案格式:', singleDigitMatches[1], '=', chineseNumbers[singleDigitMatches[1]]);
-        return chineseNumbers[singleDigitMatches[1]];
-    }
-    
-    console.log('未匹配到数字');
-    return null;
-}
 
 // 页面切换功能
 function showPage(pageId) {
@@ -474,12 +155,11 @@ function showMultiplicationTable() {
     generateMultiplicationTable();
 }
 
-// 显示合并页面（学习记录+乘法表）
-function showCombinedPage() {
-    showPage('combinedPage');
-    generateMultiplicationTable('multiplicationTable2');
-    updateHistoryDisplay('historyList2');
-    updateStatisticsOverview2();
+// 显示学习历史
+function showHistory() {
+    showPage('historyPage');
+    updateHistoryDisplay();
+    updateStatisticsOverview();
 }
 
 // 生成99乘法表
@@ -635,13 +315,12 @@ function stopMultiplicationSong() {
         window.speechSynthesis.cancel();
     }
     
-    // 切换按钮显示（支持多个按钮）
-    document.querySelectorAll('.play-song-btn').forEach(btn => {
-        btn.style.display = 'flex';
-    });
-    document.querySelectorAll('.stop-song-btn').forEach(btn => {
-        btn.style.display = 'none';
-    });
+    // 切换按钮显示
+    const playBtn = document.querySelector('.play-song-btn');
+    const stopBtn = document.getElementById('stopSongBtn');
+    
+    if (playBtn) playBtn.style.display = 'flex';
+    if (stopBtn) stopBtn.style.display = 'none';
     
     // 清除所有高亮
     document.querySelectorAll('.multiplication-card').forEach(c => {
@@ -838,115 +517,7 @@ function changeDifficulty() {
     }
 }
 
-// 语音输入
-function startVoiceInput() {
-    console.log('开始语音输入...');
-    addDebugInfo('🎤 点击语音按钮');
-    
-    // 检查是否为移动端
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    console.log('是否为移动端:', isMobile);
-    addDebugInfo(`📱 设备类型: ${isMobile ? '移动端' : '桌面端'}`);
-    
-    // 检查是否为HTTPS环境（GitHub Pages自动是HTTPS）
-    const isSecure = location.protocol === 'https:';
-    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    console.log('是否为安全环境:', isSecure || isLocal);
-    addDebugInfo(`🔒 安全环境: ${isSecure || isLocal ? '是' : '否'} (${location.protocol})`);
-    
-    if (!isSecure && !isLocal) {
-        addDebugInfo('❌ 需要HTTPS环境');
-        showFeedback('语音功能需要HTTPS环境（GitHub Pages已自动支持）', false);
-        return;
-    }
-    
-    // 检查浏览器支持
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        console.error('浏览器不支持语音识别');
-        addDebugInfo('❌ 浏览器不支持语音识别');
-        showFeedback('您的浏览器不支持语音输入功能', false);
-        return;
-    }
-    console.log('浏览器支持语音识别');
-    addDebugInfo('✅ 浏览器支持语音识别');
-    
-    // 检查语音权限状态
-    const savedVoicePermission = localStorage.getItem('ultraMathVoicePermission');
-    console.log('语音权限状态:', savedVoicePermission);
-    addDebugInfo(`📋 权限状态: ${savedVoicePermission || '未设置'}`);
-    
-    if (savedVoicePermission === null) {
-        // 首次使用，请求权限
-        addDebugInfo('📝 首次使用，请求权限');
-        requestVoicePermission();
-        return;
-    } else if (savedVoicePermission === 'denied') {
-        // 用户之前拒绝了权限
-        addDebugInfo('🚫 用户之前拒绝了权限');
-        showFeedback('语音功能已被关闭，点击下方按钮重新开启', false);
-        showResetVoiceButton();
-        return;
-    }
-    
-    // 权限已允许，开始语音识别
-    if (!speechRecognition || !isVoiceEnabled) {
-        console.log('初始化语音识别...');
-        addDebugInfo('🔄 初始化语音识别...');
-        if (!initSpeechRecognition()) {
-            addDebugInfo('❌ 语音功能初始化失败');
-            showFeedback('语音功能初始化失败，请手动输入答案', false);
-            return;
-        }
-    }
-    hideResetVoiceButton(); // 隐藏重新开启按钮
-    
-    if (speechRecognition && isVoiceEnabled) {
-        console.log('语音识别对象存在，开始录音...');
-        addDebugInfo('🎙️ 开始录音...');
-        const voiceBtn = document.getElementById('voiceBtn');
-        voiceBtn.classList.add('recording');
-        voiceBtn.textContent = '🔴';
-        
-        // 显示提示
-        showFeedback('请大声说出答案数字（例如："五"或"5"）', true);
-        
-        try {
-            speechRecognition.start();
-            console.log('语音识别已启动');
-            addDebugInfo('✅ 语音识别已启动');
-        } catch (error) {
-            console.error('语音识别启动错误:', error);
-            addDebugInfo(`❌ 启动错误: ${error.message}`);
-            // 停止后再启动
-            try {
-                if (speechRecognition) {
-                    speechRecognition.stop();
-                    setTimeout(() => {
-                        speechRecognition.start();
-                        addDebugInfo('🔄 重新启动成功');
-                    }, 200);
-                }
-            } catch (stopError) {
-                console.error('语音识别无法启动:', stopError);
-                addDebugInfo(`❌ 无法启动: ${stopError.message}`);
-                showFeedback('语音识别暂时不可用，请手动输入', false);
-                stopVoiceRecording();
-            }
-        }
-    } else {
-        console.error('语音识别对象无效');
-        addDebugInfo('❌ 语音识别对象无效');
-        showFeedback('语音功能初始化失败，请手动输入', false);
-    }
-}
-
-// 停止语音录制
-function stopVoiceRecording() {
-    const voiceBtn = document.getElementById('voiceBtn');
-    voiceBtn.classList.remove('recording');
-    voiceBtn.textContent = '🎤';
-}
+// 删除了语音输入功能
 
 // 提交答案
 function submitAnswer() {
@@ -1020,7 +591,7 @@ function submitAnswer() {
                 showFinalResults();
             }, 2000);
         } else {
-            // 立即进入下一题
+            // 自动进入下一题
             setTimeout(() => {
                 currentQuestionNumber++;
                 generateQuestion();
@@ -1034,10 +605,8 @@ function submitAnswer() {
         // 播放错误语音
         playSound('wrong');
         
-        // 延迟语音提示
-        setTimeout(() => {
-            speakText('浩浩，再试试看！');
-        }, 500);
+        // 语音提示
+        speakText('浩浩，再试试看！');
         
         // 清空答案框并聚焦，停留在当前题
         setTimeout(() => {
@@ -1113,32 +682,23 @@ function restartQuiz() {
     generateQuestion();
 }
 
-// 显示反馈（仅用于重要提示，答题反馈改用语音）
+// 显示反馈（仅用于重要提示）
 function showFeedback(message, isCorrect) {
-    const modal = document.getElementById('feedbackModal');
-    const modalCharacter = document.getElementById('modalCharacter');
-    const modalMessage = document.getElementById('modalMessage');
-    const ultraCharacter = document.getElementById('ultraCharacter');
+    const feedback = document.getElementById('feedback');
+    if (!feedback) return;
     
-    if (!modal || !modalMessage) return;
-    
-    modalMessage.textContent = message;
+    feedback.textContent = message;
+    feedback.style.display = 'block';
     
     if (isCorrect) {
-        modalCharacter.textContent = '🦸‍♂️👍';
-        ultraCharacter.classList.add('correct-animation');
-        createStarBurst();
+        feedback.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
     } else {
-        modalCharacter.textContent = '🤗';
-        ultraCharacter.classList.add('wrong-animation');
+        feedback.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
     }
     
-    modal.classList.add('active');
-    
-    // 自动关闭弹窗
+    // 自动隐藏
     setTimeout(() => {
-        closeModal();
-        ultraCharacter.classList.remove('correct-animation', 'wrong-animation');
+        feedback.style.display = 'none';
     }, 2000);
 }
 
@@ -1250,9 +810,6 @@ function createStarBurst() {
 
 // 键盘事件支持
 document.addEventListener('DOMContentLoaded', function() {
-    // 检查语音权限状态
-    checkVoicePermission();
-    
     // 为难度选择器添加变化监听
     const difficultySelect = document.getElementById('difficulty');
     if (difficultySelect) {
@@ -1292,206 +849,6 @@ function createBackgroundStars() {
 // 添加一些触摸屏友好的功能
 if ('ontouchstart' in window) {
     document.addEventListener('touchstart', function() {}, false);
-}
-
-// 语音功能测试（用于调试）
-function testVoiceRecognition() {
-    console.log('=== 语音功能测试开始 ===');
-    
-    // 1. 检查浏览器支持
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    console.log('1. 浏览器支持:', !!SpeechRecognition);
-    
-    if (!SpeechRecognition) {
-        console.log('❌ 浏览器不支持语音识别');
-        return false;
-    }
-    
-    // 2. 检查HTTPS
-    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    console.log('2. 安全环境:', isSecure);
-    
-    // 3. 检查用户代理
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    console.log('3. 移动端:', isMobile);
-    console.log('4. 用户代理:', navigator.userAgent);
-    
-    // 4. 尝试创建语音识别实例
-    try {
-        const testRecognition = new SpeechRecognition();
-        console.log('5. 语音识别实例创建成功');
-        
-        testRecognition.lang = 'zh-CN';
-        testRecognition.continuous = false;
-        testRecognition.interimResults = false;
-        
-        testRecognition.onstart = function() {
-            console.log('6. 语音识别已启动');
-        };
-        
-        testRecognition.onspeechstart = function() {
-            console.log('7. 检测到语音输入');
-        };
-        
-        testRecognition.onspeechend = function() {
-            console.log('8. 语音输入结束');
-        };
-        
-        testRecognition.onresult = function(event) {
-            console.log('9. 识别结果:', event.results[0][0].transcript);
-        };
-        
-        testRecognition.onerror = function(event) {
-            console.log('10. 识别错误:', event.error);
-        };
-        
-        testRecognition.onend = function() {
-            console.log('11. 语音识别结束');
-        };
-        
-        console.log('=== 测试完成，可以尝试启动语音识别 ===');
-        return true;
-        
-    } catch (error) {
-        console.log('❌ 语音识别实例创建失败:', error);
-        return false;
-    }
-}
-
-// 添加全局测试函数，方便在控制台调用
-window.testVoiceRecognition = testVoiceRecognition;
-
-// 调试面板功能
-let debugPanel = null;
-let debugBtn = null;
-
-// 创建调试面板
-function createDebugPanel() {
-    // 创建调试按钮
-    debugBtn = document.createElement('button');
-    debugBtn.className = 'debug-btn';
-    debugBtn.textContent = '调试';
-    debugBtn.onclick = toggleDebugPanel;
-    document.body.appendChild(debugBtn);
-    
-    // 创建调试面板
-    debugPanel = document.createElement('div');
-    debugPanel.className = 'debug-panel';
-    debugPanel.innerHTML = `
-        <div id="debugContent">调试信息面板</div>
-        <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;">
-            <button onclick="testSimpleVoice()" style="padding: 5px; background: #27ae60; color: white; border: none; border-radius: 3px; cursor: pointer;">测试语音</button>
-            <button onclick="clearDebugInfo()" style="padding: 5px; background: #ee5a24; color: white; border: none; border-radius: 3px; cursor: pointer;">清空</button>
-        </div>
-    `;
-    document.body.appendChild(debugPanel);
-}
-
-// 切换调试面板显示
-function toggleDebugPanel() {
-    if (!debugPanel) {
-        createDebugPanel();
-    }
-    debugPanel.classList.toggle('show');
-}
-
-// 添加调试信息
-function addDebugInfo(info) {
-    if (!debugPanel) {
-        createDebugPanel();
-    }
-    const debugContent = document.getElementById('debugContent');
-    const time = new Date().toLocaleTimeString();
-    debugContent.innerHTML += `<div>[${time}] ${info}</div>`;
-    // 自动滚动到底部
-    debugContent.scrollTop = debugContent.scrollHeight;
-}
-
-// 清空调试信息
-function clearDebugInfo() {
-    const debugContent = document.getElementById('debugContent');
-    if (debugContent) {
-        debugContent.innerHTML = '调试信息面板<br>已清空，重新开始测试';
-    }
-    // 3秒后自动关闭面板
-    setTimeout(() => {
-        if (debugPanel && debugPanel.classList.contains('show')) {
-            debugPanel.classList.remove('show');
-        }
-    }, 3000);
-}
-
-// 简单语音测试函数
-function testSimpleVoice() {
-    addDebugInfo('🎯 开始简单语音测试...');
-    
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-        addDebugInfo('❌ 浏览器不支持语音识别');
-        showFeedback('您的浏览器不支持语音识别', false);
-        return;
-    }
-    
-    const testRecognition = new SpeechRecognition();
-    testRecognition.lang = 'zh-CN';
-    testRecognition.continuous = false;
-    testRecognition.interimResults = true;
-    
-    testRecognition.onstart = function() {
-        addDebugInfo('🎤 测试语音识别已启动');
-        showFeedback('请说一个数字（如：五、6、七）', true);
-    };
-    
-    testRecognition.onspeechstart = function() {
-        addDebugInfo('🎤 检测到语音输入');
-    };
-    
-    testRecognition.onspeechend = function() {
-        addDebugInfo('🔇 语音输入结束');
-    };
-    
-    testRecognition.onresult = function(event) {
-        if (event.results && event.results.length > 0) {
-            const result = event.results[0];
-            if (result && result.length > 0) {
-                const transcript = result[0].transcript;
-                const isFinal = result.isFinal;
-                
-                addDebugInfo(`📝 测试结果: "${transcript}" ${isFinal ? '(最终)' : '(中间)'}`);
-                
-                if (isFinal) {
-                    const number = extractNumberFromSpeech(transcript);
-                    if (number !== null) {
-                        addDebugInfo(`✅ 测试成功，数字: ${number}`);
-                        showFeedback(`语音测试成功！识别到数字: ${number}`, true);
-                        document.getElementById('answerInput').value = number;
-                    } else {
-                        addDebugInfo('❌ 测试未找到数字');
-                        showFeedback(`测试结果："${transcript}" - 未识别到数字`, false);
-                    }
-                    testRecognition.stop();
-                }
-            }
-        }
-    };
-    
-    testRecognition.onerror = function(event) {
-        addDebugInfo(`❌ 测试错误: ${event.error}`);
-        showFeedback(`语音测试失败: ${event.error}`, false);
-    };
-    
-    testRecognition.onend = function() {
-        addDebugInfo('🏁 测试语音识别结束');
-    };
-    
-    try {
-        testRecognition.start();
-        addDebugInfo('✅ 测试语音识别已启动');
-    } catch (error) {
-        addDebugInfo(`❌ 测试启动失败: ${error.message}`);
-        showFeedback('语音测试启动失败', false);
-    }
 }
 
 // 更新历史记录显示
@@ -1948,21 +1305,8 @@ function exportHistoryReportCSV() {
     }
 }
 
-// 在页面加载时创建调试面板
+// 在页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化答题记录
     initQuizHistory();
-    
-    // 延迟创建调试面板，确保页面已加载
-    setTimeout(() => {
-        createDebugPanel();
-        addDebugInfo('🚀 页面加载完成');
-        addDebugInfo('🌐 用户代理: ' + navigator.userAgent.substring(0, 50) + '...');
-        addDebugInfo('🔒 协议: ' + location.protocol);
-        addDebugInfo('📍 主机: ' + location.hostname);
-        
-        // 检查浏览器支持
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        addDebugInfo(SpeechRecognition ? '✅ 支持语音识别' : '❌ 不支持语音识别');
-    }, 1000);
 });
