@@ -51,16 +51,10 @@
                 <div class="btn-character">🐢</div>
             </button>
             
-            <button class="menu-btn multiplication-table-btn" onclick="showMultiplicationTable()">
+            <button class="menu-btn combined-btn" onclick="showCombinedPage()">
                 <div class="btn-icon">📊</div>
-                <div class="btn-text">九九乘法表</div>
+                <div class="btn-text">学习记录&乘法表</div>
                 <div class="btn-character">🦊</div>
-            </button>
-            
-            <button class="menu-btn history-btn" onclick="showHistory()">
-                <div class="btn-icon">📚</div>
-                <div class="btn-text">学习记录</div>
-                <div class="btn-character">🏆</div>
             </button>
         </div>
     </div>
@@ -177,6 +171,83 @@
             <!-- 历史记录列表 -->
             <div class="history-list" id="historyList">
                 <!-- 历史记录将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 学习记录与乘法表合并页面 -->
+    <div id="combinedPage" class="page">
+        <div class="question-header">
+            <button class="back-btn" onclick="backToMain()">🏠 返回主页</button>
+            <div class="table-title">📚 学习记录 & 九九乘法表 📊</div>
+        </div>
+        
+        <div class="combined-container">
+            <!-- 左侧：学习记录 -->
+            <div class="combined-left">
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="totalSessions2">0</div>
+                            <div class="stat-label">总学习次数</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="totalCorrect2">0</div>
+                            <div class="stat-label">总答对题数</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="totalStamps2">0</div>
+                            <div class="stat-label">获得印章总数</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="todayCorrect2">0</div>
+                            <div class="stat-label">今日答对题数</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="date-filter">
+                    <button class="filter-btn" onclick="filterHistory('all')">全部</button>
+                    <button class="filter-btn" onclick="filterHistory('today')">今天</button>
+                    <button class="filter-btn" onclick="filterHistory('week')">本周</button>
+                    <button class="filter-btn" onclick="filterHistory('month')">本月</button>
+                    <button class="export-btn" onclick="exportHistoryReport()">📊 导出</button>
+                </div>
+                
+                <div class="history-list" id="historyList2">
+                    <!-- 历史记录将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <!-- 右侧：乘法表 -->
+            <div class="combined-right">
+                <div class="table-controls">
+                    <button class="play-song-btn" onclick="playMultiplicationSong()">
+                        <span class="play-icon">▶️</span>
+                        <span class="play-text">播放儿歌</span>
+                    </button>
+                    <button class="stop-song-btn" id="stopSongBtn2" onclick="stopMultiplicationSong()" style="display: none;">
+                        <span class="play-icon">⏹️</span>
+                        <span class="play-text">停止</span>
+                    </button>
+                </div>
+                
+                <div class="multiplication-table" id="multiplicationTable2">
+                    <!-- 乘法表将通过JavaScript动态生成 -->
+                </div>
             </div>
         </div>
     </div>

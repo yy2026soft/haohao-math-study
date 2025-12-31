@@ -186,12 +186,12 @@ function initSpeechRecognition() {
     }
     
     try {
-        addDebugInfo('开始初始化语音识别...');
+        addDebugInfo('🔄 开始初始化语音识别...');
         speechRecognition = new SpeechRecognition();
         speechRecognition.lang = 'zh-CN';
         speechRecognition.continuous = false;
-        speechRecognition.interimResults = true; // 启用中间结果
-        speechRecognition.maxAlternatives = 1;
+        speechRecognition.interimResults = false; // 改为false，只使用最终结果
+        speechRecognition.maxAlternatives = 3; // 增加备选结果数量
         
         speechRecognition.onstart = function() {
             console.log('语音识别已启动');
@@ -220,12 +220,9 @@ function initSpeechRecognition() {
                     const isFinal = result.isFinal;
                     
                     console.log('语音识别结果:', transcript, '置信度:', confidence, '是否最终:', isFinal);
-                    addDebugInfo(`📝 识别结果: "${transcript}" (${Math.round(confidence * 100)}%)`);
+                    addDebugInfo(`📝 识别结果: "${transcript}" (${Math.round(confidence * 100)}%) ${isFinal ? '(最终)' : '(中间)'}`);
                     
                     if (isFinal) {
-                        // 显示识别到的内容（调试用）
-                        showFeedback(`识别到: "${transcript}"`, true);
-                        
                         // 尝试从语音中提取数字
                         const number = extractNumberFromSpeech(transcript);
                         if (number !== null) {
@@ -233,6 +230,7 @@ function initSpeechRecognition() {
                             addDebugInfo(`✅ 提取数字: ${number}`);
                             document.getElementById('answerInput').value = number;
                             stopVoiceRecording();
+                            showFeedback(`识别到: "${transcript}" → ${number}`, true);
                             // 自动提交答案
                             setTimeout(() => {
                                 submitAnswer();
@@ -255,7 +253,7 @@ function initSpeechRecognition() {
             let errorMsg = '语音识别失败，请手动输入';
             switch(event.error) {
                 case 'not-allowed':
-                    errorMsg = '语音权限被拒绝，请检查浏览器权限设置';
+                    errorMsg = '语音权限被拒绝，请在浏览器地址栏允许麦克风权限';
                     addDebugInfo('❌ 权限被拒绝');
                     break;
                 case 'no-speech':
@@ -263,7 +261,7 @@ function initSpeechRecognition() {
                     addDebugInfo('❌ 没有检测到语音');
                     break;
                 case 'audio-capture':
-                    errorMsg = '麦克风被占用，请稍后再试';
+                    errorMsg = '麦克风被占用或没有麦克风，请检查设备';
                     addDebugInfo('❌ 麦克风被占用');
                     break;
                 case 'network':
@@ -271,7 +269,7 @@ function initSpeechRecognition() {
                     addDebugInfo('❌ 网络错误');
                     break;
                 case 'service-not-allowed':
-                    errorMsg = '语音服务不可用，请检查网络连接';
+                    errorMsg = '语音服务不可用，请使用Chrome浏览器';
                     addDebugInfo('❌ 语音服务不可用');
                     break;
             }
@@ -476,9 +474,19 @@ function showMultiplicationTable() {
     generateMultiplicationTable();
 }
 
+// 显示合并页面（学习记录+乘法表）
+function showCombinedPage() {
+    showPage('combinedPage');
+    generateMultiplicationTable('multiplicationTable2');
+    updateHistoryDisplay('historyList2');
+    updateStatisticsOverview2();
+}
+
 // 生成99乘法表
-function generateMultiplicationTable() {
-    const tableContainer = document.getElementById('multiplicationTable');
+function generateMultiplicationTable(tableId = 'multiplicationTable') {
+    const tableContainer = document.getElementById(tableId);
+    if (!tableContainer) return;
+    
     tableContainer.innerHTML = '';
     
     // 创建彩虹色渐变背景
@@ -627,12 +635,13 @@ function stopMultiplicationSong() {
         window.speechSynthesis.cancel();
     }
     
-    // 切换按钮显示
-    const playBtn = document.querySelector('.play-song-btn');
-    const stopBtn = document.getElementById('stopSongBtn');
-    
-    if (playBtn) playBtn.style.display = 'flex';
-    if (stopBtn) stopBtn.style.display = 'none';
+    // 切换按钮显示（支持多个按钮）
+    document.querySelectorAll('.play-song-btn').forEach(btn => {
+        btn.style.display = 'flex';
+    });
+    document.querySelectorAll('.stop-song-btn').forEach(btn => {
+        btn.style.display = 'none';
+    });
     
     // 清除所有高亮
     document.querySelectorAll('.multiplication-card').forEach(c => {
@@ -832,17 +841,22 @@ function changeDifficulty() {
 // 语音输入
 function startVoiceInput() {
     console.log('开始语音输入...');
+    addDebugInfo('🎤 点击语音按钮');
     
     // 检查是否为移动端
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     console.log('是否为移动端:', isMobile);
+    addDebugInfo(`📱 设备类型: ${isMobile ? '移动端' : '桌面端'}`);
     
-    // 检查是否为HTTPS环境
-    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    console.log('是否为安全环境:', isSecure);
+    // 检查是否为HTTPS环境（GitHub Pages自动是HTTPS）
+    const isSecure = location.protocol === 'https:';
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    console.log('是否为安全环境:', isSecure || isLocal);
+    addDebugInfo(`🔒 安全环境: ${isSecure || isLocal ? '是' : '否'} (${location.protocol})`);
     
-    if (isMobile && !isSecure) {
-        showFeedback('手机端语音功能需要HTTPS环境，请在电脑上使用或使用HTTPS访问', false);
+    if (!isSecure && !isLocal) {
+        addDebugInfo('❌ 需要HTTPS环境');
+        showFeedback('语音功能需要HTTPS环境（GitHub Pages已自动支持）', false);
         return;
     }
     
@@ -850,21 +864,26 @@ function startVoiceInput() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
         console.error('浏览器不支持语音识别');
+        addDebugInfo('❌ 浏览器不支持语音识别');
         showFeedback('您的浏览器不支持语音输入功能', false);
         return;
     }
     console.log('浏览器支持语音识别');
+    addDebugInfo('✅ 浏览器支持语音识别');
     
     // 检查语音权限状态
     const savedVoicePermission = localStorage.getItem('ultraMathVoicePermission');
     console.log('语音权限状态:', savedVoicePermission);
+    addDebugInfo(`📋 权限状态: ${savedVoicePermission || '未设置'}`);
     
     if (savedVoicePermission === null) {
         // 首次使用，请求权限
+        addDebugInfo('📝 首次使用，请求权限');
         requestVoicePermission();
         return;
     } else if (savedVoicePermission === 'denied') {
         // 用户之前拒绝了权限
+        addDebugInfo('🚫 用户之前拒绝了权限');
         showFeedback('语音功能已被关闭，点击下方按钮重新开启', false);
         showResetVoiceButton();
         return;
@@ -873,7 +892,9 @@ function startVoiceInput() {
     // 权限已允许，开始语音识别
     if (!speechRecognition || !isVoiceEnabled) {
         console.log('初始化语音识别...');
+        addDebugInfo('🔄 初始化语音识别...');
         if (!initSpeechRecognition()) {
+            addDebugInfo('❌ 语音功能初始化失败');
             showFeedback('语音功能初始化失败，请手动输入答案', false);
             return;
         }
@@ -882,6 +903,7 @@ function startVoiceInput() {
     
     if (speechRecognition && isVoiceEnabled) {
         console.log('语音识别对象存在，开始录音...');
+        addDebugInfo('🎙️ 开始录音...');
         const voiceBtn = document.getElementById('voiceBtn');
         voiceBtn.classList.add('recording');
         voiceBtn.textContent = '🔴';
@@ -892,24 +914,29 @@ function startVoiceInput() {
         try {
             speechRecognition.start();
             console.log('语音识别已启动');
+            addDebugInfo('✅ 语音识别已启动');
         } catch (error) {
             console.error('语音识别启动错误:', error);
+            addDebugInfo(`❌ 启动错误: ${error.message}`);
             // 停止后再启动
             try {
                 if (speechRecognition) {
                     speechRecognition.stop();
                     setTimeout(() => {
                         speechRecognition.start();
+                        addDebugInfo('🔄 重新启动成功');
                     }, 200);
                 }
             } catch (stopError) {
                 console.error('语音识别无法启动:', stopError);
+                addDebugInfo(`❌ 无法启动: ${stopError.message}`);
                 showFeedback('语音识别暂时不可用，请手动输入', false);
                 stopVoiceRecording();
             }
         }
     } else {
         console.error('语音识别对象无效');
+        addDebugInfo('❌ 语音识别对象无效');
         showFeedback('语音功能初始化失败，请手动输入', false);
     }
 }
@@ -1460,8 +1487,8 @@ function testSimpleVoice() {
 }
 
 // 更新历史记录显示
-function updateHistoryDisplay() {
-    const historyList = document.getElementById('historyList');
+function updateHistoryDisplay(listId = 'historyList') {
+    const historyList = document.getElementById(listId);
     if (!historyList) return;
     
     if (quizHistory.length === 0) {
@@ -1526,6 +1553,39 @@ function updateStatisticsOverview() {
     document.getElementById('totalCorrect').textContent = totalCorrect;
     document.getElementById('totalStamps').textContent = totalStamps;
     document.getElementById('todayCorrect').textContent = todayCorrect;
+}
+
+// 更新统计概览（合并页面专用）
+function updateStatisticsOverview2() {
+    let totalSessions = quizHistory.length;
+    let totalCorrect = 0;
+    let totalStamps = 0;
+    let todayCorrect = 0;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    quizHistory.forEach(session => {
+        totalCorrect += session.correctCount;
+        totalStamps += session.totalStamps;
+        
+        const sessionDate = new Date(session.date);
+        sessionDate.setHours(0, 0, 0, 0);
+        
+        if (sessionDate >= today) {
+            todayCorrect += session.correctCount;
+        }
+    });
+    
+    const elTotalSessions = document.getElementById('totalSessions2');
+    const elTotalCorrect = document.getElementById('totalCorrect2');
+    const elTotalStamps = document.getElementById('totalStamps2');
+    const elTodayCorrect = document.getElementById('todayCorrect2');
+    
+    if (elTotalSessions) elTotalSessions.textContent = totalSessions;
+    if (elTotalCorrect) elTotalCorrect.textContent = totalCorrect;
+    if (elTotalStamps) elTotalStamps.textContent = totalStamps;
+    if (elTodayCorrect) elTodayCorrect.textContent = todayCorrect;
 }
 
 // 筛选历史记录

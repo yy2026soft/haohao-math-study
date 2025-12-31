@@ -133,7 +133,7 @@ body {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
-.history-btn {
+.combined-btn {
     background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
     grid-column: span 2;
 }
@@ -1058,6 +1058,55 @@ body {
     padding: 50px;
     color: rgba(255,255,255,0.7);
     font-size: 1.2em;
+}
+
+/* 合并页面样式 */
+.combined-container {
+    display: flex;
+    gap: 20px;
+    padding: 15px;
+    max-width: 1400px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.combined-left {
+    flex: 1;
+    min-width: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.combined-right {
+    flex: 1;
+    min-width: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.combined-left .stats-overview,
+.combined-right .stats-overview {
+    margin-bottom: 15px;
+}
+
+.combined-left .history-list {
+    flex: 1;
+    max-height: 500px;
+}
+
+.combined-right .table-controls {
+    margin-bottom: 10px;
+}
+
+@media (max-width: 900px) {
+    .combined-container {
+        flex-direction: column;
+    }
+    
+    .combined-left,
+    .combined-right {
+        min-width: 100%;
+    }
 }
 
 .table-cell.highlight {
