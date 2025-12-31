@@ -977,51 +977,73 @@ function submitAnswer() {
         if (correctCount === nextRewardCount) {
             if (correctCount === 10) {
                 stamps += 1;
-                rewardMessage = '浩浩，太棒了，可以找妈妈要积分奖励了，1个印章，再答对10道题奖励2个印章哦！';
+                rewardMessage = '太棒了，可以找妈妈要积分奖励了，1个印章，再答对10道题奖励2个印章哦！';
                 nextRewardCount = 20;
             } else if (correctCount === 20) {
                 stamps += 2;
-                rewardMessage = '浩浩，太棒了，可以找妈妈要积分奖励了，2个印章哦！';
+                rewardMessage = '太棒了，可以找妈妈要积分奖励了，2个印章哦！';
                 nextRewardCount = 30;
             } else if (correctCount === 30) {
                 stamps += 2;
-                rewardMessage = '浩浩，太棒了，可以找妈妈要积分奖励了，2个印章哦！';
+                rewardMessage = '太棒了，可以找妈妈要积分奖励了，2个印章哦！';
                 nextRewardCount = 40;
             } else if (correctCount === 40) {
                 stamps += 2;
-                rewardMessage = '浩浩，太棒了，可以找妈妈要积分奖励了，2个印章哦！';
+                rewardMessage = '太棒了，可以找妈妈要积分奖励了，2个印章哦！';
                 nextRewardCount = 50;
             }
             
+            // 播放奖励语音
             if (rewardMessage) {
-                showFeedback(rewardMessage, true);
-            } else {
-                showFeedback('浩浩小朋友你真棒！！', true);
+                playSound('correct');
+                createStarBurst();
+                setTimeout(() => {
+                    speakText(rewardMessage);
+                }, 1000);
             }
         } else {
-            showFeedback('浩浩小朋友你真棒！！', true);
+            // 播放正确语音和动画
+            playSound('correct');
+            createStarBurst();
+            setTimeout(() => {
+                speakText('浩浩小朋友你真棒！');
+            }, 500);
         }
+        
+        // 更新统计显示
+        updateStatistics();
         
         // 检查是否完成了所有题目
         if (currentQuestionNumber >= totalQuestions) {
-            // 显示最终成绩
+            // 延迟显示最终成绩
             setTimeout(() => {
                 showFinalResults();
-            }, 3000);
-        } else {
-            // 进入下一题
-            currentQuestionNumber++;
-            setTimeout(() => {
-                generateQuestion();
             }, 2000);
+        } else {
+            // 立即进入下一题
+            setTimeout(() => {
+                currentQuestionNumber++;
+                generateQuestion();
+            }, 1500);
         }
     } else {
-        // 答错了，继续当前题
+        // 答错了，只语音播报，不弹窗
         wrongCount++;
-        showFeedback('浩浩，再试试看！', false);
-        document.getElementById('answerInput').value = '';
-        document.getElementById('answerInput').focus();
-        updateStatistics(); // 更新统计但不改变题目
+        updateStatistics();
+        
+        // 播放错误语音
+        playSound('wrong');
+        
+        // 延迟语音提示
+        setTimeout(() => {
+            speakText('浩浩，再试试看！');
+        }, 500);
+        
+        // 清空答案框并聚焦，停留在当前题
+        setTimeout(() => {
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').focus();
+        }, 1000);
     }
 }
 
@@ -1091,31 +1113,33 @@ function restartQuiz() {
     generateQuestion();
 }
 
-// 显示反馈
+// 显示反馈（仅用于重要提示，答题反馈改用语音）
 function showFeedback(message, isCorrect) {
     const modal = document.getElementById('feedbackModal');
     const modalCharacter = document.getElementById('modalCharacter');
     const modalMessage = document.getElementById('modalMessage');
     const ultraCharacter = document.getElementById('ultraCharacter');
     
+    if (!modal || !modalMessage) return;
+    
     modalMessage.textContent = message;
     
     if (isCorrect) {
         modalCharacter.textContent = '🦸‍♂️👍';
         ultraCharacter.classList.add('correct-animation');
-        playSound('correct');
         createStarBurst();
     } else {
         modalCharacter.textContent = '🤗';
         ultraCharacter.classList.add('wrong-animation');
-        playSound('wrong');
     }
     
     modal.classList.add('active');
     
+    // 自动关闭弹窗
     setTimeout(() => {
+        closeModal();
         ultraCharacter.classList.remove('correct-animation', 'wrong-animation');
-    }, 1000);
+    }, 2000);
 }
 
 
@@ -1160,11 +1184,6 @@ function playSound(type) {
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 0.5);
-            
-            // 使用语音合成
-            setTimeout(() => {
-                speakText('浩浩小朋友你真棒！！');
-            }, 100);
         } else {
             // 错误答案的声音 - 温和的提醒音
             oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4
@@ -1173,20 +1192,9 @@ function playSound(type) {
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 0.3);
-            
-            // 使用语音合成
-            setTimeout(() => {
-                speakText('浩浩，再试试看！');
-            }, 100);
         }
     } catch (error) {
         console.error('音频播放错误:', error);
-        // 如果音频播放失败，仍然使用语音合成
-        if (type === 'correct') {
-            speakText('浩浩小朋友你真棒！！');
-        } else {
-            speakText('浩浩，再试试看！');
-        }
     }
 }
 
